@@ -3,10 +3,10 @@
 close all;                          % close all figures
 % clear;                              % clear all variables
 % clc;                                % clear the command terminal
-
+maindir=fileparts(fileparts(which('TestMethodsFromScript.m')));
 %%
-CompareMethods=[6]; % 1=YoungSooSuh, 2=madg, 3=valenti, 4=PRCF, 5=MadgwickAHRSclanek, 6=modif2
-set=4;   %set1=1 set2=2 set12=3 set123=4 ALSdataset=5 synthetic2=6 synthetic3=7
+CompareMethods=[4]; % 1=YoungSooSuh, 2=madg, 3=valenti, 4=PRCF, 5=MadgwickAHRSclanek, 6=modif2
+set=8;   %set1=1 set2=2 set12=3 set123=4 ALSdataset=5 synthetic2=6 synthetic3=7
 
 if(set<5)
     load('Justa_dataset.mat')
@@ -16,6 +16,25 @@ elseif(set==6)
     load('Synthetic2.mat')
 elseif(set==7)
     load('Synthetic3.mat')
+elseif(set==8)
+   data= readmatrix(fullfile(maindir,'Datasets','move01.csv'),'NumHeaderLines',5);
+   Accelerometer=data(:,18:20)/1000;
+   Gyroscope=data(:,21:23)*pi/180;
+   Magnetometer=data(:,24:26)*1e5; %need to check conversion
+   GlobalA=data(:,27:29)*pi/180;
+
+   GlobalMarkers=readmatrix('framekinematics.txt','NumHeaderLines',5);
+    for c=2:4
+        nanx = isnan(GlobalMarkers(:,c));
+        t    = 1:numel(GlobalMarkers(:,c));
+        GlobalMarkers(nanx,c)= interp1(t(~nanx), GlobalMarkers(~nanx,c), t(nanx));
+    end
+    GlobalMarkers(:,1)=[];
+   GlobalMarkers= interp1(t,GlobalMarkers,linspace(1,length(t),length(GlobalA)))*pi/180; 
+   qViconReference=eul2quat(GlobalA, 'XYZ');
+   time=0:1/225:(length(t))/225;
+
+%load('Wand.mat')
 end
 
 quaternionCountJ = zeros(length(time), 4);
@@ -84,8 +103,11 @@ end
 %%
 if(any(CompareMethods==4))
     AHRS = JustaAHRSPureFast();
-    AHRS.wAcc=0.001;%
-    AHRS.wMag=0.01;%
+%     AHRS.wAcc=0.001;%
+%     AHRS.wMag=0.01;%
+    AHRS.wAcc=0.002906;%
+    AHRS.wMag=5.219;%
+    AHRS.gain=.0254;
     AHRSs = cat(2,AHRSs,{AHRS});
 end
 %%
@@ -142,18 +164,18 @@ end
 
 figure('DefaultAxesFontSize',18,'Position',[50,50,floor(1900*1/1),600]);
 plot(time(1:end-1),quaternionCountJ,'LineWidth',1.0);
-xline(70.92,'LineWidth',1.0);
-xline(39.3,'LineWidth',1.0);
+% xline(70.92,'LineWidth',1.0);
+% xline(39.3,'LineWidth',1.0);
 title('Estimated quaternion FSCF')
 ylabel('[-]')
 xlabel('Time (s)')
 legend('w','x','y','z');
 
-% [minim2,ind]= min(scalErr(5,:));
-% disp(['Relative to the best:', num2str(scalErr(5,:)/minim2)]);
-% figure
-% plot(time(start:myEnd),movmean(errorAngles,30));
-% ylabel('MAE Error (deg)')
-% xlabel('Time (s)')
-% legend(names);
+[minim2,ind]= min(scalErr(5,:));
+disp(['Relative to the best:', num2str(scalErr(5,:)/minim2)]);
+figure
+plot(time(start:myEnd),movmean(errorAngles,30));
+ylabel('MAE Error (deg)')
+xlabel('Time (s)')
+legend(names);
 %% End of script

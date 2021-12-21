@@ -13,6 +13,8 @@ elseif(set==6)
     load('Synthetic2.mat')
 elseif(set==7)
     load('Synthetic3.mat')
+    elseif(set==8)
+    load('Wand.mat')
 end
 
 switch(set)
