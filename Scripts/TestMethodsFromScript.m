@@ -5,8 +5,13 @@ close all;                          % close all figures
 % clc;                                % clear the command terminal
 maindir=fileparts(fileparts(which('TestMethodsFromScript.m')));
 %%
-CompareMethods=[4]; % 1=YoungSooSuh, 2=madg, 3=valenti, 4=PRCF, 5=MadgwickAHRSclanek, 6=modif2
+CompareMethods=[2:6]; % 1=YoungSooSuh, 2=madg, 3=valenti, 4=PRCF, 5=MadgwickAHRSclanek, 6=modif2
 set=8;   %set1=1 set2=2 set12=3 set123=4 ALSdataset=5 synthetic2=6 synthetic3=7
+
+optimAttempts=0;
+RMS=0;
+optimFreezeParam=0;
+IMU=1; %usemag or not
 
 if(set<5)
     load('Justa_dataset.mat')
@@ -30,9 +35,12 @@ elseif(set==8)
         GlobalMarkers(nanx,c)= interp1(t(~nanx), GlobalMarkers(~nanx,c), t(nanx));
     end
     GlobalMarkers(:,1)=[];
-   GlobalMarkers= interp1(t,GlobalMarkers,linspace(1,length(t),length(GlobalA)))*pi/180; 
-   qViconReference=eul2quat(GlobalA, 'XYZ');
+    GlobalMarkers = unwrap(GlobalMarkers*pi/180,[],1)
+
+   GlobalMarkers= interp1(t,GlobalMarkers,linspace(1,length(t),length(GlobalA))); 
+   qViconReference=eul2quat(GlobalMarkers, 'XYZ');
    time=0:1/225:(length(t))/225;
+
 
 %load('Wand.mat')
 end
@@ -64,6 +72,7 @@ if(any(CompareMethods==1))
     AHRS.rg= 0.0370;
     AHRS.ra= 0.000031;
     AHRS.rm= 0.0000235;    
+
     
 %     AHRS.rg= 0.0005631158677499999;
 %     AHRS.ra= 0.0000018351604003246236;
@@ -137,6 +146,14 @@ for method = 1:length(AHRSs)
     AHRSs{method}.Quaternion = qViconReference(start,:);
     quaternionCountJ = zeros(myEnd, 4);
     
+
+tic
+while toc<10
+
+                   [ AHRSs{method},e,param,optimAttempts,optimFreezeParam]=...
+                       optimFilterParams( AHRSs{method},1,set,optimAttempts,optimFreezeParam,IMU);
+    end
+
     for t = start:myEnd
         %AHRS.iter=AHRS.iter+1;
         if(t==start)
@@ -156,6 +173,7 @@ for method = 1:length(AHRSs)
     end
     qErr=quaternProd(qViconReference((start:myEnd),:),quaternConj(quaternionCountJ(start:myEnd,:)));
     qErr(qErr(:,1)<0,:)=-qErr(qErr(:,1)<0,:);
+    qErr=real(qErr);
     uhel=abs(2*atan2(sqrt(sum(qErr(:,2:4).^2,2)),qErr(:,1))*180/pi).^2;
     errorAngles=[errorAngles uhel];
     %scalErr(4,method)=0;

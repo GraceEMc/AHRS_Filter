@@ -1,6 +1,10 @@
 function [AHRS,error,parameters,reoptimIters,reoptimParam]=optimFilterParams(AHRS,RMS,dataset,reoptimIters,reoptimParam,IMU)
 
 close all; % close all figures
+%inputs
+%AHRS
+%RMS ==1 or 0
+% set =set number
 
 %% 
 set=dataset;   %set1=1 set2=2 set12=3 set123=4
@@ -180,7 +184,7 @@ for sw=1:params
             
         end
         %             qErr=quaternProd([qViconReference(start:3450,:);qViconReference(3550:myEnd,:)],quaternConj([quaternionCountJ(start:3450,:);quaternionCountJ(3550:myEnd,:)]));
-        qErr=quaternProd(qViconReference((start:myEnd),:),quaternConj(quaternionCountJ(start:myEnd,:)));
+        qErr=real(quaternProd(qViconReference((start:myEnd),:),quaternConj(quaternionCountJ(start:myEnd,:))));
         qErr(qErr(:,1)<0,:)=-qErr(qErr(:,1)<0,:);
         if(IMU)
 %             filEul=real(quat2eul(qErr));

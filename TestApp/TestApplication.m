@@ -397,6 +397,8 @@ classdef TestApplication < matlab.apps.AppBase
                     app.dataset=6;
                 case 'Synthetic3'
                     app.dataset=7;
+                               case 'Wand'
+                    app.dataset=8;
             end
             app.errorProgress1=0;
             app.intProg1=1;
@@ -698,7 +700,7 @@ classdef TestApplication < matlab.apps.AppBase
 
             % Create DropDown3
             app.DropDown3 = uidropdown(app.Panel3);
-            app.DropDown3.Items = {'Set1', 'Set2', 'Set12', 'Set123', 'ALSdataset', 'Synthetic2', 'Synthetic3'};
+            app.DropDown3.Items = {'Set1', 'Set2', 'Set12', 'Set123', 'ALSdataset', 'Synthetic2', 'Synthetic3','Wand'};
             app.DropDown3.ValueChangedFcn = createCallbackFcn(app, @datasetChanged, true);
             app.DropDown3.Position = [104 16 100 22];
             app.DropDown3.Value = 'Set1';
